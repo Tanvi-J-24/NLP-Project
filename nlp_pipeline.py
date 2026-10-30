@@ -107,9 +107,16 @@ def load_or_train(df: pd.DataFrame):
     if os.path.exists(MODEL_PATH):
         try:
             _pipeline = joblib.load(MODEL_PATH)
+            # Validate the loaded model is compatible with current sklearn
+            _pipeline.predict_proba(["test"])
             return _pipeline
         except Exception:
-            pass
+            # Stale / incompatible model — delete and retrain
+            _pipeline = None
+            try:
+                os.remove(MODEL_PATH)
+            except OSError:
+                pass
 
     result = train_model(df)
     _pipeline = result["pipeline"]
